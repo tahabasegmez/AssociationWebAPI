@@ -1,0 +1,26 @@
+# Build output
+bin/
+obj/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Logs
+*.log
+
+# Local configuration and secrets
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+secrets.json
+
+# EF artifacts (machine-specific)
+*.dbmdf
+*.ldf
+
+# OS
+Thumbs.db
+.DS_Store

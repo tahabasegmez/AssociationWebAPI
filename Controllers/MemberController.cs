@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 
 using AssociationWebAPI.Application.DTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
+using AutoMapper;
+using AssociationWebAPI.Controllers;
 
 namespace AssociationWebAPI.Controllers
 {
@@ -23,7 +26,7 @@ namespace AssociationWebAPI.Controllers
         }
 
         [HttpGet("corporate/{id}")]
-        public IActionResult GetCorporateMember(int id)
+        public IActionResult GetCorporateMember([FromRoute] int id)
         {
             var member = _context.Members
                 .OfType<Corporate>()
@@ -56,6 +59,48 @@ namespace AssociationWebAPI.Controllers
                     CountryId = member.Address.CountryId
                 },
                 RepresentativeIds = member.Representatives.Select(r => r.Id).ToList()
+            };
+            
+            return Ok(memberDto);
+        }
+
+        [HttpGet("individual/{id}")]
+        public IActionResult GetIndividualMember([FromRoute] int id)
+        {
+            var member = _context.Members
+                .OfType<Individual>()
+                .Where(m => m.Id == id)
+                .Include(m => m.Address)
+                .FirstOrDefault();
+
+            if (member == null)
+            {
+                return NotFound();
+            }
+
+            var memberDto = new IndividualResponseDto
+            {
+                Name = member.Name,
+                Surname = member.Surname,
+                NationalIdentityNumber = member.NationalIdentityNumber,
+                Occupation = member.Occupation,
+                BirthDate = member.BirthDate,
+                Birthplace = member.Birthplace,
+                EducationStatus = member.EducationStatus,
+                RegistrationDate = member.RegistrationDate,
+                Status = member.Status,
+                InactiveDate = member.InactiveDate,
+                Email = member.Email,
+                Phone = member.Phone,
+                Address = new AddressResponseDto
+                {
+                    OpenAddress = member.Address.OpenAddress,
+                    DistrictId = member.Address.DistrictId,
+                    CityId = member.Address.CityId,
+                    StateId = member.Address.StateId,
+                    PostalCode = member.Address.PostalCode,
+                    CountryId = member.Address.CountryId
+                }
             };
 
             return Ok(memberDto);
@@ -90,7 +135,9 @@ namespace AssociationWebAPI.Controllers
                 EducationStatus = memberDto.EducationStatus
             };
 
-            return Ok(member);
+            _context.Members.Add(member); 
+            _context.SaveChanges();
+            return CreatedAtAction("GetIndividualMember", new { id = member.Id }, member);
         }
     }
 }

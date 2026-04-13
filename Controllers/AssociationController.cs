@@ -2,49 +2,34 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AssociationWebAPI.Infrastructure.Data;
-using AssociationWebAPI.Domain.Entities;
+using AssociationWebAPI.Application.Interfaces.Services;
 using AssociationWebAPI.Application.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AssociationWebAPI.Controllers
 {
+    [ApiController]
+    [Route("api")]
     public class AssociationController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IAssociationService _associationService;
 
-        public AssociationController(ApplicationDbContext context)
+        public AssociationController(IAssociationService associationService)
         {
-            _context = context;
+            _associationService = associationService;
         }
 
         [HttpGet("association")]
-        public IActionResult GetAssociation()
+        public async Task<IActionResult> GetAssociation(CancellationToken cancellationToken)
         {
-            var association = _context.Association.FirstOrDefault();
-            if (association == null)
+            var association = await _associationService.GetAssociationAsync(cancellationToken);
+
+            if (association is null)
             {
                 return NotFound();
             }
-            var associationDto = new AssociationRequestDto
-            {
-                Name = association.Name,
-                Description = association.Description,
-                Address = new AddressRequestDto
-                {
-                    OpenAddress = association.Address.OpenAddress,
-                    DistrictId = association.Address.DistrictId,
-                    CityId = association.Address.CityId,
-                    StateId = association.Address.StateId,
-                    PostalCode = association.Address.PostalCode,
-                    CountryId = association.Address.CountryId
-                },
-                Safe = new SafeRequestDto
-                {
-                    Balance = association.Safe.Balance,
-                }
-            };
-            return Ok(associationDto);
+
+            return Ok(association);
         }
     }
 }

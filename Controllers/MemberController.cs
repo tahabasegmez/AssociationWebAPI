@@ -1,10 +1,7 @@
 ﻿
-using AssociationWebAPI.Domain.Entities;
-using AssociationWebAPI.Infrastructure.Data;
+using AssociationWebAPI.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 using AssociationWebAPI.Application.DTOs;
-using Microsoft.EntityFrameworkCore;
-using AssociationWebAPI.Application.Mappers;
 
 namespace AssociationWebAPI.Controllers
 {
@@ -12,60 +9,48 @@ namespace AssociationWebAPI.Controllers
     [Route("api/member")]
     public class MemberController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IMemberService _memberService;
 
-        public MemberController(ApplicationDbContext context)
+        public MemberController(IMemberService memberService)
         {
-            _context = context;
+            _memberService = memberService;
         }
 
         [HttpGet("corporate/{id}")]
-        public IActionResult GetCorporateMember([FromRoute] int id)
+        public async Task<IActionResult> GetCorporateMember([FromRoute] int id, CancellationToken cancellationToken)
         {
-            var member = _context.Members
-                .OfType<Corporate>()
-                .Where(m => m.Id == id)
-                .Include(m => m.Address)
-                .Include(m => m.Dues)
-                .Include(m => m.Representatives)
-                .FirstOrDefault();
+            var member = await _memberService.GetCorporateMemberAsync(id, cancellationToken);
 
             if (member == null)
             {
                 return NotFound();
             }
-
-            var memberDto = DefaultDtoEntityMapperExtensions.ToResponseDto(member);
             
-            return Ok(memberDto);
+            return Ok(member);
         }
 
         [HttpGet("individual/{id}")]
-        public IActionResult GetIndividualMember([FromRoute] int id)
+        public async Task<IActionResult> GetIndividualMember([FromRoute] int id, CancellationToken cancellationToken)
         {
-            var member = _context.Members
-                .OfType<Individual>()
-                .Where(m => m.Id == id)
-                .Include(m => m.Address)
-                .FirstOrDefault();
+            var member = await _memberService.GetIndividualMemberAsync(id, cancellationToken);
 
             if (member == null)
             {
                 return NotFound();
             }
 
-            var memberDto = DefaultDtoEntityMapperExtensions.ToResponseDto(member);
-
-            return Ok(memberDto);
+            return Ok(member);
         }
 
         [HttpPost("individual")]
-        public IActionResult CreateIndividualMember([FromBody] IndividualRequestDto memberDto)
+        public async Task<IActionResult> CreateIndividualMember([FromBody] IndividualRequestDto memberDto, CancellationToken cancellationToken)
         {
-            var member = DefaultDtoEntityMapperExtensions.ToEntity(memberDto);
+            if (memberDto == null)
+            {
+                return BadRequest();
+            }
 
-            _context.Members.Add(member); 
-            _context.SaveChanges();
+            var member = await _memberService.CreateIndividualMemberAsync(memberDto, cancellationToken);
             return CreatedAtAction(nameof(GetIndividualMember), new { id = member.Id }, member);
         }
     }

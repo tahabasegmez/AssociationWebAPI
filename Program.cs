@@ -1,6 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AssociationWebAPI.Application.Interfaces.Repositories;
+using AssociationWebAPI.Application.Interfaces.Services;
+using AssociationWebAPI.Application.Services;
 using AssociationWebAPI.Application.Mappers;
 using AssociationWebAPI.Infrastructure.Data;
+using AssociationWebAPI.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +12,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddApplicationMappers();
+
+builder.Services.AddScoped<IMemberRepository, MemberRepository>();
+builder.Services.AddScoped<IAssociationRepository, AssociationRepository>();
+builder.Services.AddScoped<IMemberService, MemberService>();
+builder.Services.AddScoped<IAssociationService, AssociationService>();
 
 builder.Services.AddControllers();
 
